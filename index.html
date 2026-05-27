@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Löneförhöjning</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1D9E75;
+    --green-dark: #156e52;
+    --green-light: #E1F5EE;
+    --cream: #f9f7f2;
+    --ink: #1a1a1a;
+    --muted: #888;
+    --gold: #c9a84c;
+    --gold-light: #f5e6b8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  #cursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    font-size: 28px;
+    transform: translate(-50%, -50%);
+    transition: font-size 0.2s cubic-bezier(.34,1.56,.64,1);
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.18));
+    line-height: 1;
+    user-select: none;
+  }
+
+  .confetti-piece {
+    position: fixed;
+    top: -20px;
+    pointer-events: none;
+    z-index: 9000;
+    border-radius: 2px;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg) scaleX(1); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scaleX(-1); opacity: 0; }
+  }
+
+  .page {
+    display: none;
+    padding: 2.5rem 2rem;
+    max-width: 580px;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeUp 0.4s ease forwards;
+  }
+  .page.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+
+  p.sub {
+    font-size: 15px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 1.8rem;
+    line-height: 1.65;
+    max-width: 380px;
+  }
+
+  .btn-wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: 1rem;
+  }
+
+  .btn-yes {
+    background: var(--green);
+    color: #fff;
+    border: none;
+    padding: 15px 52px;
+    font-size: 17px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 14px;
+    cursor: none;
+    display: block;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 18px rgba(29,158,117,0.3);
+    transition: background 0.15s, transform 0.1s;
+  }
+  .btn-yes:hover { background: var(--green-dark); transform: scale(1.02); }
+  .btn-yes:active { transform: scale(0.97); }
+
+  .btn-no {
+    background: #ebe9e2;
+    color: #777;
+    border: 0.5px solid #ccc;
+    padding: 15px 52px;
+    font-size: 17px;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 14px;
+    cursor: none;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    transition: top 0.15s ease, left 0.15s ease;
+    white-space: nowrap;
+    z-index: 1;
+  }
+
+  #page1 h1, #page1 p.sub, #page1 .miss-msg {
+    position: relative;
+    z-index: 2;
+  }
+
+  .miss-msg {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 18px;
+    min-height: 20px;
+    text-align: center;
+    font-style: italic;
+  }
+
+  /* ─── SALARY GRID ─── */
+  .salary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 460px;
+    margin-bottom: 1.5rem;
+  }
+
+  .sal-btn {
+    background: #fff;
+    border: 1px solid #e0ddd6;
+    border-radius: 14px;
+    padding: 22px 14px;
+    cursor: none;
+    text-align: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .sal-btn:hover {
+    border-color: var(--green);
+    background: var(--green-light);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(29,158,117,0.15);
+  }
+
+  /* ─── CONTRACT PAGE ─── */
+  #page3 {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .contract-wrap {
+    width: 100%;
+    max-width: 520px;
+    perspective: 1200px;
+  }
+
+  .contract {
+    background: #fdfcf7;
+    border: 1px solid #c8c2b4;
+    outline: 4px solid #fdfcf7;
+    outline-offset: -9px;
+    border-radius: 2px;
+    padding: 2.2rem 2.6rem 2rem;
+    position: relative;
+    box-shadow:
+      0 1px 0 #bfb9ab,
+      0 2px 0 #b5afa1,
+      0 3px 0 #aaa497,
+      inset 0 0 80px rgba(200,190,160,0.12),
+      0 24px 70px rgba(0,0,0,0.16);
+    animation: contractDrop 0.7s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+
+  @keyframes contractDrop {
+    from { opacity: 0; transform: rotateX(-18deg) translateY(-24px) scale(0.96); }
+    to   { opacity: 1; transform: rotateX(0deg) translateY(0) scale(1); }
+  }
+
+  /* Subtle paper texture via noise gradient */
+  .contract::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    border-radius: 2px;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* Ruled lines */
+  .contract::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      transparent, transparent 28px,
+      rgba(180,170,150,0.18) 28px, rgba(180,170,150,0.18) 29px
+    );
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  /* ── Header ── */
+  .contract-header {
+    text-align: center;
+    padding-bottom: 1.1rem;
+    margin-bottom: 1.2rem;
+    position: relative;
+  }
+
+  .contract-header::after {
+    content: '';
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    height: 0;
+    border-top: 2px solid #1a1a1a;
+    border-bottom: 0.5px solid #1a1a1a;
+    margin-top: 0.9rem;
+  }
+
+  .contract-org {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #999;
+    margin-bottom: 0.5rem;
+  }
+
+  .contract-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.05em;
+    color: #1a1a1a;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .contract-subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10.5px;
+    color: #aaa;
+    letter-spacing: 0.12em;
+    margin-top: 3px;
+    text-transform: uppercase;
+  }
+
+  /* ── Body text ── */
+  .contract-body {
+    font-size: 13px;
+    color: #333;
+    line-height: 1.9;
+    position: relative;
+    z-index: 1;
+    text-align: justify;
+  }
+
+  .contract-body strong { color: #111; font-weight: 600; }
+  .contract-body em { font-style: italic; color: #555; }
+
+  .contract-para {
+    margin-bottom: 0.75rem;
+  }
+
+  .contract-para-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    color: #bbb;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.15rem;
+    font-style: italic;
+  }
+
+  /* ── Amount box ── */
+  .contract-amount-box {
+    border: 1px solid #c8c2b4;
+    border-radius: 2px;
+    background: #f5f2ea;
+    padding: 0.9rem 1.2rem;
+    margin: 1rem 0;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .contract-amount-box::before {
+    content: '§';
+    position: absolute;
+    top: -9px; left: 50%; transform: translateX(-50%);
+    background: #f5f2ea;
+    padding: 0 8px;
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    color: #bbb;
+  }
+
+  .contract-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px;
+    font-weight: 900;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+
+  .contract-amount-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    color: #999;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  /* ── Divider ── */
+  .contract-divider {
+    border: none;
+    border-top: 0.5px solid #ccc;
+    margin: 1rem 0;
+  }
+
+  /* ── Signatures ── */
+  .contract-footer {
+    border-top: 2px solid #1a1a1a;
+    border-bottom: 0.5px solid #1a1a1a;
+    padding: 1.1rem 0 1rem;
+    margin-top: 1.1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .sig-block { text-align: left; }
+
+  .sig-role {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #aaa;
+    margin-bottom: 0.5rem;
+  }
+
+  .sig-line {
+    border-bottom: 1px solid #888;
+    margin-bottom: 5px;
+    height: 36px;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 3px;
+  }
+
+  .sig-name {
+    font-family: 'Dancing Script', cursive;
+    font-size: 26px;
+    color: #1a1a1a;
+    opacity: 0;
+    animation: signAppear 1s ease 0.6s forwards;
+    line-height: 1;
+  }
+  .sig-name.delay { animation-delay: 1.0s; }
+
+  @keyframes signAppear {
+    from { opacity: 0; transform: translateX(-8px) rotate(-2deg); }
+    to   { opacity: 1; transform: translateX(0) rotate(0deg); }
+  }
+
+  .sig-label {
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Wax seal stamp ── */
+  .stamp-wrap {
+    position: absolute;
+    bottom: -28px;
+    right: 10px;
+    width: 72px;
+    height: 72px;
+    animation: stampIt 0.25s cubic-bezier(.68,-0.55,.27,1.55) 1.6s both;
+    z-index: 2;
+  }
+
+  @keyframes stampIt {
+    from { opacity: 0; transform: scale(2.2) rotate(-20deg); }
+    to   { opacity: 1; transform: scale(1) rotate(-8deg); }
+  }
+
+  .stamp-ring {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #e74c3c, #922b21);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 3px 12px rgba(146,43,33,0.5), inset 0 1px 3px rgba(255,255,255,0.2);
+    position: relative;
+  }
+
+  .stamp-ring::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.3);
+  }
+
+  .stamp-inner {
+    font-size: 28px;
+    line-height: 1;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+  }
+
+  /* ── Date footer ── */
+  .contract-meta {
+    margin-top: 1.4rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: #aaa;
+    letter-spacing: 0.06em;
+    position: relative;
+    z-index: 1;
+    padding-bottom: 0.2rem;
+  }
+
+  /* ─── DINNER BANNER ─── */
+  .dinner-banner {
+    background: linear-gradient(135deg, var(--gold-light), #fffaf0);
+    border: 1px solid #d4aa50;
+    border-top: 3px solid var(--gold);
+    border-radius: 0 0 10px 10px;
+    padding: 0.9rem 1.4rem;
+    margin-top: 0;
+    max-width: 520px;
+    width: 100%;
+    font-size: 13px;
+    color: #6b5120;
+    line-height: 1.65;
+    position: relative;
+    animation: bannerPop 0.5s cubic-bezier(.34,1.56,.64,1) 1.9s both;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  @keyframes bannerPop {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .dinner-banner-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #8a6820;
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .emoji-big {
+    font-size: 46px;
+    margin-bottom: 1rem;
+    display: block;
+    animation: bounce 0.6s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+  @keyframes bounce {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+  }
+
+  /* ─── FAIL PAGE ─── */
+  .fail-box {
+    background: #fff;
+    border: 1.5px solid #e8b4b0;
+    border-left: 5px solid #c0392b;
+    border-radius: 8px;
+    padding: 1.4rem 1.6rem;
+    max-width: 460px;
+    width: 100%;
+    margin-bottom: 1.4rem;
+    animation: contractDrop 0.5s cubic-bezier(.34,1.56,.64,1) forwards;
+  }
+
+  .fail-code {
+    font-family: 'DM Sans', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c0392b;
+    background: #fdecea;
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 0.8rem;
+  }
+
+  .fail-msg {
+    font-size: 14px;
+    color: #444;
+    line-height: 1.75;
+    margin-bottom: 0;
+  }
+
+  .fail-divider {
+    border-top: 1px dashed #e8b4b0;
+    margin: 1rem 0;
+  }
+
+  .fail-action {
+    font-size: 13.5px;
+    color: #555;
+    line-height: 1.75;
+    background: #fff8f7;
+    border-radius: 6px;
+    padding: 0.7rem 0.9rem;
+  }
+
+  .btn-retry {
+    background: #fff;
+    border: 1.5px solid #c0392b;
+    color: #c0392b;
+    padding: 12px 36px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    border-radius: 12px;
+    cursor: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-retry:hover { background: #c0392b; color: #fff; }
+
+  .hurra {
+    position: fixed;
+    pointer-events: none;
+    z-index: 8000;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 2.4rem;
+    color: var(--green);
+    animation: hurraFly 1.4s ease forwards;
+    text-shadow: 0 2px 12px rgba(29,158,117,0.3);
+  }
+  @keyframes hurraFly {
+    0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+    20%  { opacity: 1; transform: translateY(-30px) scale(1.1); }
+    80%  { opacity: 1; transform: translateY(-80px) scale(1); }
+    100% { opacity: 0; transform: translateY(-120px) scale(0.8); }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor">💰</div>
+
+<!-- Page 1 -->
+<div id="page1" class="page active">
+  <span class="emoji-big">💼</span>
+  <h1>Hej Michaela!<br>Kan jag få löneförhöjning?</h1>
+  <p class="sub">Jag jobbar hårt, jag är fantastisk,<br>och jag förtjänar mer. Vad säger du?</p>
+  <div class="btn-wrap" id="btnWrap">
+    <button class="btn-yes" id="yesBtn" onclick="pressYes()">✅ Ja, absolut!</button>
+    <button class="btn-no" id="noBtn">⏳ Inte än</button>
+  </div>
+  <p class="miss-msg" id="missMsg"></p>
+</div>
+
+<!-- Page 2 -->
+<div id="page2" class="page">
+  <span class="emoji-big">🎉</span>
+  <h1>Suveränt beslut, Michaela!<br>Nu väljer du lönen.</h1>
+  <p class="sub">Välj den löneökning Caroline förtjänar.<br>(Spoiler: alla alternativ är rätt.)</p>
+  <div class="salary-grid" id="salaryGrid"></div>
+</div>
+
+<!-- Page Fail — lowest salary chosen -->
+<div id="page-fail" class="page">
+  <span class="emoji-big">🚫</span>
+  <h1 style="color:#c0392b;">Transaktionen nekades.</h1>
+  <div class="fail-box">
+    <div class="fail-code">FEL KOD: 48500</div>
+    <div class="fail-msg">
+      Det valda beloppet understiger godkänd miniminivå för
+      <strong>Caroline Berglin, Service Delivery Manager</strong>.
+      Systemet kan inte bekräfta detta beslut.
+    </div>
+    <div class="fail-divider"></div>
+    <div class="fail-action">
+      📋 Rekommenderad åtgärd:<br>
+      Kontakta <strong>Katarina Sutrowitz</strong> för vägledning
+      om lämplig lönenivå innan nytt försök görs.
+    </div>
+  </div>
+  <button class="btn-retry" onclick="showPage('page2')">↩ Försök igen</button>
+</div>
+
+<!-- Page 3 — Contract -->
+<div id="page3" class="page">
+  <div class="contract-wrap">
+    <div class="contract">
+
+      <div class="contract-header">
+        <div class="contract-org">Internt arbetsdokument · Konfidentiellt</div>
+        <div class="contract-title">Löneöverenskommelse</div>
+        <div class="contract-subtitle">Juridiskt bindande · Bevittnat av 💰</div>
+      </div>
+
+      <div class="contract-para">
+        <div class="contract-para-num">§ 1 — Parterna</div>
+        <div class="contract-body">
+          Mellan <strong>Michaela</strong> (arbetsgivare) och
+          <strong>Caroline Berglin</strong>, verksam i rollen som
+          <strong>Service Delivery Manager</strong>, har följande
+          överenskommelse träffats.
+        </div>
+      </div>
+
+      <div class="contract-para">
+        <div class="contract-para-num">§ 2 — Lönevillkor</div>
+        <div class="contract-body">
+          Härmed bekräftas att Caroline Berglin från och med
+          närmast lönutbetalning erhåller en ny månadslön om:
+        </div>
+      </div>
+
+      <div class="contract-amount-box">
+        <div class="contract-amount" id="finalSalary">—</div>
+        <div class="contract-amount-label">kronor per månad</div>
+      </div>
+
+      <div class="contract-para">
+        <div class="contract-para-num">§ 3 — Villkor & förbehåll</div>
+        <div class="contract-body">
+          Detta beslut är <strong>bindande</strong> och oåterkalleligt samt
+          har bevittnats av pengapåsen. Parterna är eniga om att processen
+          hade kunnat genomföras väsentligt snabbare om knappen
+          <em>"Inte än"</em> aldrig hade existerat.
+        </div>
+      </div>
+
+      <div class="contract-meta">
+        <span>Upprättat: <span id="dateStamp"></span></span>
+        <span>Ref: CB-SDM-<span id="refNum"></span></span>
+      </div>
+
+      <div class="contract-footer">
+        <div class="sig-block">
+          <div class="sig-role">Arbetsgivare</div>
+          <div class="sig-line"><span class="sig-name">Michaela</span></div>
+          <div class="sig-label">Underskrift</div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-role">Arbetstagare</div>
+          <div class="sig-line"><span class="sig-name delay">Caroline</span></div>
+          <div class="sig-label">Underskrift</div>
+        </div>
+        <div class="stamp-wrap">
+          <div class="stamp-ring">
+            <span class="stamp-inner">✅</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="dinner-banner">
+    <div class="dinner-banner-title">🍽️ &nbsp;Middagsklausul § 7</div>
+    Som ett naturligt firande av detta historiska beslut förbinder sig
+    <strong>Michaela</strong> att bjuda <strong>Caroline</strong> på middag
+    nästa gång parterna befinner sig i Sundsvall. 🥂<br>
+    <span style="font-size:11px; color:#9a7a30; margin-top:4px; display:block;">
+      Ej förhandlingsbart. Restaurangvalet delegeras till Caroline.
+    </span>
+  </div>
+
+</div>
+
+<script>
+  // ─── CURSOR ───────────────────────────────────────
+  const cursor = document.getElementById('cursor');
+
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+
+  // Grow cursor over time — starts at 28px, reaches 150px after ~10s
+  const cursorStart = Date.now();
+  function tickCursor() {
+    const elapsed = (Date.now() - cursorStart) / 1000;
+    const size = Math.min(28 + elapsed * 12, 150);
+    cursor.style.fontSize = size + 'px';
+    requestAnimationFrame(tickCursor);
+  }
+  tickCursor();
+
+  // ─── DODGE BUTTON ─────────────────────────────────
+  let clicks = 0;
+  const msgs = [
+    "Inte än? Den knappen verkar ha egna planer...",
+    "Hmm, väldigt rörlig den där.",
+    "Inte än-knappen är lite nervös uppenbarligen.",
+    "Kanske är JA lättare att träffa?",
+    "Pengapåsen följer dig vart du går 👀",
+    "Din muspekare är ju en hel förmögenhet nu.",
+    "Knappen har tydligen bestämt sig.",
+    "Ge upp — tryck ja! Alla vinner!",
+    "Allvarligt talat Michaela... 😅",
+  ];
+
+  const noBtn = document.getElementById('noBtn');
+  noBtn.addEventListener('mouseenter', dodge);
+  noBtn.addEventListener('touchstart', dodge, { passive: true });
+  noBtn.addEventListener('click', e => { e.preventDefault(); dodge(); });
+
+  function dodge() {
+    clicks++;
+    const btnW = noBtn.offsetWidth;
+    const btnH = noBtn.offsetHeight;
+    const stage = Math.floor((clicks - 1) / 2);
+    let newTop, newLeft;
+    if      (stage === 0) { newTop = btnH + 24; newLeft = 0; }
+    else if (stage === 1) { newTop = -(btnH + 24); newLeft = 0; }
+    else if (stage === 2) { newTop = 0; newLeft = btnW + 28; }
+    else if (stage === 3) { newTop = 0; newLeft = -(btnW + 28); }
+    else { newTop = (Math.random() - 0.5) * 200; newLeft = (Math.random() - 0.5) * 240; }
+    noBtn.style.top  = newTop + 'px';
+    noBtn.style.left = newLeft + 'px';
+    document.getElementById('missMsg').textContent = msgs[Math.min(clicks - 1, msgs.length - 1)];
+
+    if (clicks >= 9) {
+      setTimeout(() => {
+        noBtn.style.transition = 'top 0.7s ease, left 0.7s ease';
+        noBtn.style.top = '0px'; noBtn.style.left = '0px';
+        document.getElementById('missMsg').textContent = "Inte än-knappen kapitulerade äntligen...";
+        setTimeout(() => {
+          noBtn.style.opacity = '0';
+          document.getElementById('missMsg').textContent = "Det verkar bli ett ja, Michaela! 🎉";
+          setTimeout(pressYes, 800);
+        }, 750);
+      }, 300);
+    }
+  }
+
+  // ─── YES PRESSED ──────────────────────────────────
+  const salaries = [48500, 52000, 55000, 58000, 62000, 66000];
+
+  function pressYes() {
+    showPage('page2');
+    const grid = document.getElementById('salaryGrid');
+    grid.innerHTML = '';
+    salaries.forEach((s, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'sal-btn';
+      btn.textContent = s.toLocaleString('sv-SE') + ' kr';
+      btn.onclick = () => chooseSalary(s, i);
+      grid.appendChild(btn);
+    });
+  }
+
+  // ─── SALARY CHOSEN ────────────────────────────────
+  function chooseSalary(amount, tier) {
+    if (tier === 0) {
+      showPage('page-fail');
+      return;
+    }
+    const now = new Date();
+    const ts = now.toLocaleDateString('sv-SE') + ', ' + now.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('finalSalary').textContent = amount.toLocaleString('sv-SE');
+    document.getElementById('dateStamp').textContent = ts;
+    document.getElementById('refNum').textContent = Math.floor(1000 + Math.random() * 9000);
+    showPage('page3');
+
+    const count = 70 + tier * 20;
+    launchConfetti(count);
+
+    const hurraWords = ['HURRA!', 'YES!', '🎉', 'TACK!', '💸', 'YAY!', '🏆', '✨'];
+    for (let i = 0; i < 7; i++) {
+      setTimeout(() => spawnHurra(hurraWords[i % hurraWords.length]), i * 160);
+    }
+    playCheer();
+  }
+
+  // ─── CONFETTI ─────────────────────────────────────
+  const colors = ['#1D9E75','#c9a84c','#f04e6a','#4a90d9','#a259f7','#ff8c42','#ffffff','#1a1a1a'];
+  function launchConfetti(count) {
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+        el.style.width  = (7 + Math.random() * 9) + 'px';
+        el.style.height = (11 + Math.random() * 10) + 'px';
+        el.style.animationDuration = (1.8 + Math.random() * 2.2) + 's';
+        el.style.animationDelay   = (Math.random() * 0.6) + 's';
+        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 5000);
+      }, i * 18);
+    }
+  }
+
+  // ─── HURRA FLOATERS ───────────────────────────────
+  function spawnHurra(text) {
+    const el = document.createElement('div');
+    el.className = 'hurra';
+    el.textContent = text;
+    el.style.left = (10 + Math.random() * 70) + 'vw';
+    el.style.top  = (25 + Math.random() * 45) + 'vh';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
+  }
+
+  // ─── CHEER SOUND ──────────────────────────────────
+  function playCheer() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523, 659, 784, 1047, 880, 1047, 1319];
+      notes.forEach((freq, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.11);
+        gain.gain.setValueAtTime(0.16, ctx.currentTime + i * 0.11);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.11 + 0.32);
+        osc.start(ctx.currentTime + i * 0.11);
+        osc.stop(ctx.currentTime + i * 0.11 + 0.36);
+      });
+    } catch(e) {}
+  }
+
+  // ─── PAGE SWITCH ──────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const pg = document.getElementById(id);
+    pg.classList.remove('active');
+    void pg.offsetWidth;
+    pg.classList.add('active');
+  }
+</script>
+</body>
+</html>
