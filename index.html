@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Löneförhöjning</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .page { display: none; padding: 2rem 1.5rem; min-height: 500px; max-width: 560px; width: 100%; flex-direction: column; align-items: center; justify-content: center; }
+  .page.active { display: flex; }
+  h1 { font-size: 22px; font-weight: 500; color: #1a1a1a; text-align: center; margin-bottom: 0.5rem; }
+  p { font-size: 15px; color: #666; text-align: center; margin-bottom: 1.5rem; line-height: 1.6; }
+  .btn-wrap { position: relative; display: inline-block; margin-top: 1.5rem; }
+  .btn-yes { background: #1D9E75; color: #fff; border: none; padding: 14px 48px; font-size: 18px; font-weight: 500; border-radius: 12px; cursor: pointer; display: block; }
+  .btn-yes:hover { background: #178a64; }
+  .btn-no { background: #f0efea; color: #666; border: 0.5px solid #ccc; padding: 14px 48px; font-size: 18px; border-radius: 12px; cursor: pointer; position: absolute; top: 0; left: 0; width: 100%; transition: top 0.15s ease, left 0.15s ease; white-space: nowrap; }
+  .salary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 440px; margin-bottom: 1.5rem; }
+  .sal-btn { background: #fff; border: 0.5px solid #ccc; border-radius: 12px; padding: 20px 12px; cursor: pointer; text-align: center; font-size: 17px; font-weight: 500; color: #1a1a1a; transition: border-color 0.15s, background 0.15s; }
+  .sal-btn:hover { border-color: #1D9E75; background: #E1F5EE; }
+  .contract { background: #f0efea; border: 0.5px solid #ddd; border-radius: 12px; padding: 2rem; max-width: 380px; width: 100%; text-align: center; }
+  .contract .big { font-size: 32px; font-weight: 500; color: #1D9E75; margin: 0.5rem 0; }
+  .miss-msg { font-size: 13px; color: #999; margin-top: 12px; min-height: 20px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="page1" class="page active">
+  <div style="font-size:40px; margin-bottom:1rem;">💼</div>
+  <h1>Hej Michaela! Kan jag få löneförhöjning?</h1>
+  <p>Jag jobbar hårt, jag är fantastisk,<br>och jag förtjänar mer. Vad säger du?</p>
+  <div class="btn-wrap" id="btnWrap">
+    <button class="btn-yes" id="yesBtn" onclick="pressYes()">✅ Ja!</button>
+    <button class="btn-no" id="noBtn">⏳ Inte än</button>
+  </div>
+  <p class="miss-msg" id="missMsg"></p>
+</div>
+
+<div id="page2" class="page">
+  <div style="font-size:40px; margin-bottom:1rem;">🎉</div>
+  <h1>Bra beslut, Michaela! Välj lön.</h1>
+  <p>Välj hur mycket löneförhöjning Caroline ska få.</p>
+  <div class="salary-grid" id="salaryGrid"></div>
+</div>
+
+<div id="page3" class="page">
+  <div style="font-size:40px; margin-bottom:1rem;">🎊</div>
+  <h1>Löneökning beviljad!</h1>
+  <p>Beslutet är fattat och signerat av Michaela.</p>
+  <div class="contract">
+    <div style="font-size:14px; color:#666; margin-bottom:4px;">Caroline Berglin får</div>
+    <div class="big" id="finalSalary">—</div>
+    <div style="font-size:14px; color:#666;">kr / månad</div>
+    <div style="margin-top:1rem; padding-top:1rem; border-top:0.5px solid #ddd; font-size:13px; color:#666;" id="confirmNote"></div>
+  </div>
+</div>
+
+<script>
+  const salaries = [46000, 48500, 52000, 55000, 58000, 62000];
+  let clicks = 0;
+  const msgs = [
+    "Inte än? Vi får se om knappen håller med...",
+    "Hmm, den vill inte stanna still.",
+    "Inte än-knappen har egna åsikter.",
+    "Kanske är ja lättare?",
+    "Handen vill uppenbarligen trycka ja.",
+    "Inte än är inte riktigt ett alternativ.",
+    "Ge upp — tryck ja!",
+  ];
+
+  const noBtn = document.getElementById('noBtn');
+  noBtn.addEventListener('mouseenter', dodge);
+  noBtn.addEventListener('touchstart', dodge, { passive: true });
+  noBtn.addEventListener('click', function(e) { e.preventDefault(); dodge(); });
+
+  function dodge() {
+    clicks++;
+    const btnW = noBtn.offsetWidth;
+    const btnH = noBtn.offsetHeight;
+    const stage = Math.floor((clicks - 1) / 2);
+    let newTop, newLeft;
+    if (stage === 0) { newTop = btnH + 20; newLeft = 0; }
+    else if (stage === 1) { newTop = -(btnH + 20); newLeft = 0; }
+    else if (stage === 2) { newTop = 0; newLeft = btnW + 20; }
+    else if (stage === 3) { newTop = 0; newLeft = -(btnW + 20); }
+    else { newTop = (Math.random() - 0.5) * 160; newLeft = (Math.random() - 0.5) * 200; }
+    noBtn.style.top = newTop + 'px';
+    noBtn.style.left = newLeft + 'px';
+    document.getElementById('missMsg').textContent = msgs[Math.min(clicks - 1, msgs.length - 1)];
+    if (clicks >= 9) {
+      setTimeout(() => {
+        noBtn.style.transition = 'top 0.6s ease, left 0.6s ease';
+        noBtn.style.top = '0px';
+        noBtn.style.left = '0px';
+        document.getElementById('missMsg').textContent = "Inte än-knappen gav upp och hamnade rätt...";
+        setTimeout(() => {
+          noBtn.style.opacity = '0';
+          document.getElementById('missMsg').textContent = "Ser ut som ett ja, Michaela! 🎉";
+          setTimeout(pressYes, 800);
+        }, 700);
+      }, 300);
+    }
+  }
+
+  function pressYes() {
+    showPage('page2');
+    const grid = document.getElementById('salaryGrid');
+    grid.innerHTML = '';
+    salaries.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'sal-btn';
+      btn.textContent = s.toLocaleString('sv-SE') + ' kr';
+      btn.onclick = () => chooseSalary(s);
+      grid.appendChild(btn);
+    });
+  }
+
+  function chooseSalary(amount) {
+    const ts = new Date().toLocaleString('sv-SE');
+    try { localStorage.setItem('raise_decision', JSON.stringify({ salary: amount, timestamp: ts, misses: clicks })); } catch(e) {}
+    document.getElementById('finalSalary').textContent = amount.toLocaleString('sv-SE');
+    document.getElementById('confirmNote').textContent = 'Godkänt av Michaela ' + ts + ' ✅';
+    showPage('page3');
+  }
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+</script>
+</body>
+</html>
